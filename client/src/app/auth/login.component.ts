@@ -1,7 +1,10 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, isFormArray, isFormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../core/auth.service';
 import { User } from '../shared/models/user';
+import { Router } from '@angular/router';
+import { LocalStorageService } from '../shared/services/local-storage.service';
+
 
 @Component({
   selector: 'app-login',
@@ -10,10 +13,15 @@ import { User } from '../shared/models/user';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent implements OnInit{
-  private loginService = inject(AuthService)
-  private formBuilder= inject(FormBuilder)
+
+export class LoginComponent implements OnInit {
+  private loginService = inject (AuthService)
+  private formBuilder = inject(FormBuilder)
+  private router=inject(Router)
+  private localStorageService = inject (LocalStorageService)
   loginForm!:FormGroup;
+
+
 
   ngOnInit(): void {
     this.loginForm=this.formBuilder.group({
@@ -22,15 +30,20 @@ export class LoginComponent implements OnInit{
     })
   }
 
-  submit(){
+  async submit(){
     const user:User={
       email:this.loginForm.controls["email"].value,
       password:this.loginForm.controls["password"].value,
     }
-    if(this.loginForm.valid){
-      console.log("pass1");
-      this.loginService.login(user);
-      console.log("pass2",user)
+    try {
+      await this.loginService.login(user);
+      const {id} = this.localStorageService.getItem('user') as User
+      console.log(id);
+
+      this.router.navigate([`/profile`]);
+
+    } catch (error) {
+      alert('ups! something occurred');
     }
   }
 
